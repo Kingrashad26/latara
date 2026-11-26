@@ -61,6 +61,9 @@ def scorecard(cfg: Config):
                   f"- Worst day: {min(pls):+,.2f} · best day: {max(pls):+,.2f}"]
     report = "\n".join(lines)
     print(report)
+    os.makedirs("logs", exist_ok=True)
+    with open("logs/scorecard.md", "w") as f:
+        f.write(report + "\n")
     if os.getenv("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
             f.write(report + "\n")

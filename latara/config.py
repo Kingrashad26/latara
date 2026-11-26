@@ -2,8 +2,10 @@
 (GitHub repo Variables / Secrets) without touching code."""
 from __future__ import annotations
 
+import json
 import os
 from dataclasses import dataclass
+from pathlib import Path
 
 
 def _s(name: str, default: str) -> str:
@@ -21,6 +23,16 @@ def _f(name: str, default: float) -> float:
 
 def _i(name: str, default: int) -> int:
     return int(float(_s(name, str(default))))
+
+
+def _brain() -> dict:
+    """Strategy rules Latara learned in her weekly study (see lab.py).
+    Repo Variables still override them."""
+    try:
+        from .lab import clamp
+        return clamp(json.loads(Path(__file__).with_name("brain.json").read_text()).get("params", {}))
+    except Exception:
+        return {}
 
 
 @dataclass(frozen=True)
@@ -51,6 +63,7 @@ class Config:
     lookback_days: int
     require_spy_green: bool    # only go long when SPY's first 5-min bar is green
     breakeven_at_r: float      # move stop to entry after +N R (0 = off)
+    min_gap: float             # gap-and-go filter: required opening gap (0 = off)
 
     # --- timing (US/Eastern) ---
     entry_cutoff: str          # no new entries after this time
@@ -67,6 +80,7 @@ def load() -> Config:
     mode = _s("LATARA_MODE", "paper").lower()
     confirm = _s("LATARA_CONFIRM_LIVE", "no").lower()
     live = mode == "live" and confirm == "i-understand-this-is-real-money"
+    b = _brain()
     return Config(
         api_key=_s("ALPACA_API_KEY", ""),
         api_secret=_s("ALPACA_SECRET_KEY", ""),
@@ -75,20 +89,21 @@ def load() -> Config:
         intraday_feed=_s("LATARA_INTRADAY_FEED", "iex"),
         daily_feed=_s("LATARA_DAILY_FEED", "sip"),
         max_capital=_f("LATARA_MAX_CAPITAL", 100.0),
-        max_positions=_i("LATARA_MAX_POSITIONS", 2),
+        max_positions=_i("LATARA_MAX_POSITIONS", b.get("max_positions", 2)),
         risk_per_trade=_f("LATARA_RISK_PER_TRADE", 0.02),
         daily_loss_limit=_f("LATARA_DAILY_LOSS_LIMIT", 0.05),
         max_losers=_i("LATARA_MAX_LOSERS", 2),
         max_entry_slippage=_f("LATARA_MAX_ENTRY_SLIPPAGE", 0.005),
-        atr_stop_frac=_f("LATARA_ATR_STOP_FRAC", 0.10),
+        atr_stop_frac=_f("LATARA_ATR_STOP_FRAC", b.get("atr_stop_frac", 0.10)),
         min_price=_f("LATARA_MIN_PRICE", 5.0),
         max_price=_f("LATARA_MAX_PRICE", 1000.0),
         min_avg_volume=_f("LATARA_MIN_AVG_VOLUME", 1_000_000),
         min_atr=_f("LATARA_MIN_ATR", 0.50),
-        min_rel_volume=_f("LATARA_MIN_REL_VOLUME", 1.0),
+        min_rel_volume=_f("LATARA_MIN_REL_VOLUME", b.get("min_rel_volume", 1.0)),
         lookback_days=_i("LATARA_LOOKBACK_DAYS", 14),
-        require_spy_green=_b("LATARA_REQUIRE_SPY_GREEN", False),
-        breakeven_at_r=_f("LATARA_BREAKEVEN_AT_R", 0.0),
+        require_spy_green=_b("LATARA_REQUIRE_SPY_GREEN", b.get("require_spy_green", False)),
+        breakeven_at_r=_f("LATARA_BREAKEVEN_AT_R", b.get("breakeven_at_r", 0.0)),
+        min_gap=_f("LATARA_MIN_GAP", b.get("min_gap", 0.0)),
         entry_cutoff=_s("LATARA_ENTRY_CUTOFF", "11:30"),
         exit_time=_s("LATARA_EXIT_TIME", "15:45"),
         max_runtime_minutes=_i("LATARA_MAX_RUNTIME_MINUTES", 340),

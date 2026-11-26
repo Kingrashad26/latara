@@ -267,6 +267,25 @@ class Latara:
                 pass
         return self.finish(start_equity)
 
+    def write_journal(self):
+        """Permanent trade diary Latara studies every week (journal/trades.csv)."""
+        rows = [p for p in self.plans if p.state in ("closed", "expired", "skipped")]
+        if not rows:
+            return
+        path = Path(os.getenv("LATARA_JOURNAL", "journal/trades.csv"))
+        path.parent.mkdir(parents=True, exist_ok=True)
+        new = not path.exists()
+        mode = "dry-run" if self.cfg.dry_run else ("live" if self.cfg.live else "paper")
+        with open(path, "a", newline="") as f:
+            w = csv.writer(f)
+            if new:
+                w.writerow(["date", "mode", "symbol", "state", "note", "trigger", "stop", "entry", "exit",
+                            "qty", "pnl", "r", "relvol"])
+            for p in rows:
+                w.writerow([now_et().date(), mode, p.symbol, p.state, p.note, p.trigger, p.stop, p.entry_price,
+                            p.exit_price, p.filled_qty, round(p.pnl, 2), round(p.r_multiple, 2),
+                            round(p.rel_volume, 2)])
+
     def finish(self, start_equity: float):
         realized = sum(p.pnl for p in self.plans)
         try:
@@ -298,6 +317,7 @@ class Latara:
             status = "goal met" if day_pnl >= goal else ("green day" if day_pnl > 0 else "no gain")
             with open(out, "a") as f:
                 f.write(f"subject=Latara {now_et().date()}: {day_pnl:+,.2f} ({status})\n")
+        self.write_journal()
         path = LOG_DIR / f"trades-{now_et().date()}.csv"
         with open(path, "w", newline="") as f:
             w = csv.writer(f)

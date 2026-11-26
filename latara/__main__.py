@@ -2,6 +2,7 @@
     python -m latara trade       # run one trading day
     python -m latara flatten     # backup: close everything near the bell
     python -m latara scorecard   # last month's results
+    python -m latara study       # weekly self-study: replay, learn, update brain.json
 """
 import logging
 import os
@@ -36,6 +37,9 @@ def main():
     elif cmd == "scorecard":
         from .tools import scorecard
         scorecard(cfg)
+    elif cmd == "study":
+        from .lab import study
+        study(cfg)
     else:
         raise SystemExit(__doc__)
 

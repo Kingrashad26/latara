@@ -18,6 +18,7 @@ from alpaca.trading.enums import OrderSide, OrderStatus, TimeInForce
 from alpaca.trading.requests import GetCalendarRequest, LimitOrderRequest, StopOrderRequest
 
 from . import scanner
+from .money import todays_capital
 from .config import Config
 from .strategy import Plan, build_plan, maybe_breakeven, passes_filters, rank, should_enter, should_stop_out
 from .timeutil import at, now_et
@@ -37,6 +38,7 @@ class Latara:
         self.plans: list[Plan] = []
         self.losers = 0
         self.halted = ""
+        self.capital_note = ""
 
     # ---------- helpers ----------
     def _feed(self):
@@ -182,8 +184,11 @@ class Latara:
             return
         start_equity = float(acct.equity)
         settled = min(float(acct.cash), float(acct.non_marginable_buying_power))
-        day_budget = max(0.0, min(settled, cfg.max_capital))
-        log.info("Equity $%.2f, settled cash $%.2f, today's budget $%.2f", start_equity, settled, day_budget)
+        capital, self.capital_note = todays_capital(cfg, Path(os.getenv("LATARA_JOURNAL", "journal/trades.csv")))
+        day_budget = max(0.0, min(settled, capital))
+        log.info("Equity $%.2f, settled cash $%.2f, Latara's capital: %s", start_equity, settled, self.capital_note)
+        log.info("Today's budget $%.2f; loss limits: stop after %d loser(s) or %.0f%% down",
+                 day_budget, cfg.max_losers, cfg.daily_loss_limit * 100)
         if day_budget < 5:
             log.info("Not enough settled cash to trade today.")
             return
@@ -297,6 +302,7 @@ class Latara:
         lines = [
             "## Latara – daily report",
             f"- Mode: {'LIVE' if self.cfg.live else 'paper'}",
+            f"- Latara's capital: {self.capital_note or 'n/a'}",
             f"- Start equity: ${start_equity:,.2f} → end: ${end_equity:,.2f}",
             f"- Day P&L: **{day_pnl:+,.2f}** (goal ${goal:,.0f}: {'MET' if day_pnl >= goal else 'not met'})",
             "", "| Stock | Status | Entry | Exit | Qty | P&L | R |", "|---|---|---|---|---|---|---|",

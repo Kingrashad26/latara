@@ -25,7 +25,7 @@ def test_full_day(monkeypatch, tmp_path):
         if k.startswith("LATARA_"):
             del os.environ[k]
     os.environ.update(ALPACA_API_KEY="k", ALPACA_SECRET_KEY="s", LATARA_DRY_RUN="true",
-                      LATARA_LOG_DIR=str(tmp_path))
+                      LATARA_LOG_DIR=str(tmp_path), LATARA_JOURNAL=str(tmp_path / "journal.csv"))
     monkeypatch.setattr(T, "LOG_DIR", tmp_path)
     clk = Clock(datetime(2026, 12, 1, 9, 10, tzinfo=ET))
     monkeypatch.setattr(T, "now_et", clk.now)
@@ -65,3 +65,4 @@ def test_full_day(monkeypatch, tmp_path):
     assert by["LOSE"].note == "stop" and by["LOSE"].pnl < 0
     assert clk.t <= datetime(2026, 12, 1, 15, 46, tzinfo=ET)
     assert list(tmp_path.glob("trades-*.csv"))
+    assert (tmp_path / "journal.csv").read_text().count("\n") == 3   # header + 2 trades

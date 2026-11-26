@@ -65,6 +65,25 @@ would need to get there.
 | `LATARA_INTRADAY_FEED` | iex | Use `sip` if you pay for Alpaca's full market data |
 | `LATARA_MODE` | paper | Live trading needs **both** `LATARA_MODE=live` and `LATARA_CONFIRM_LIVE=i-understand-this-is-real-money`, plus **live** API keys in the secrets |
 
+## How Latara learns (every Saturday)
+She can't watch individual traders (their trades aren't public, and copying
+people who post wins online is a known trap). Instead she studies the market
+the way professional systematic traders do:
+1. **Journal** – every trade she makes is saved to `journal/trades.csv`.
+2. **Replay** – she downloads ~2 months of 5-minute data and replays 192
+   variations of her rules, including filters successful momentum day traders
+   use (gap-and-go: only stocks that gapped up; trading with the market: only
+   when SPY opens green; moving the stop to breakeven; tighter/wider stops).
+3. **Prove it** – she learns on the older weeks and tests on the most recent
+   weeks she hasn't seen. A new rule set is adopted only if it made money there
+   *and* beat her current rules by at least 1 percentage point.
+4. **Remember** – the chosen rules are saved in `latara/brain.json` (with a
+   history of past decisions) and used from Monday on. You get the study
+   report by email.
+
+Learning can never change money or safety settings (capital, loss limits,
+paper/live). Any repo Variable you set overrides what she learned.
+
 ## Before considering live money
 Let Latara paper trade for at least 20 trading days. Check the Friday
 scorecard: green-day %, average day, and worst day. Paper fills are kinder than

@@ -11,8 +11,10 @@ Every week Latara:
      weeks, made money there, and had enough trades to mean something,
   5. compares the replay with her real trade journal ("reality check").
 
-Money and safety settings (capital, loss limits, paper/live) are never
-touched by learning. Only strategy rules move, and only inside fixed bounds.
+She also learns her loss limits (how many losing trades, or how big a daily
+loss, before she stops for the day). Her capital compounds with her own
+results (see money.py). Paper vs live is never touched by learning, and every
+learned value stays inside fixed bounds.
 """
 from __future__ import annotations
 
@@ -40,9 +42,12 @@ GRID = {
     "breakeven_at_r": [0.0, 1.5],
     "require_spy_green": [False, True],
     "min_gap": [0.0, 0.02],
+    "max_losers": [1, 2],
+    "daily_loss_limit": [0.02, 0.05],
 }
 DEFAULTS = {"atr_stop_frac": 0.10, "min_rel_volume": 1.0, "max_positions": 2,
-            "breakeven_at_r": 0.0, "require_spy_green": False, "min_gap": 0.0}
+            "breakeven_at_r": 0.0, "require_spy_green": False, "min_gap": 0.0,
+            "max_losers": 2, "daily_loss_limit": 0.05}
 MIN_TRAIN_TRADES = 15
 MIN_TEST_TRADES = 4
 MIN_EDGE = 0.01          # new rules must beat current ones by 1 percentage point on unseen weeks
@@ -107,7 +112,7 @@ def simulate_day(day, bars, daily_info, hist_first, spy_green, p, slippage=0.000
         if stop >= trig:
             stop = trig - 0.01
         risk = trig - stop
-        entry, exit_px, cur_stop = None, None, stop
+        entry, exit_px, cur_stop, entry_t, exit_t2 = None, None, stop, None, None
         for b in bars[sym][1:]:
             tt = b.t.time()
             if entry is None:
@@ -116,25 +121,40 @@ def simulate_day(day, bars, daily_info, hist_first, spy_green, p, slippage=0.000
                 if b.h >= trig:
                     if b.o > trig * (1 + max_chase):
                         break                      # gapped past trigger: live Latara skips
-                    entry = max(trig, b.o) * (1 + slippage)
+                    entry, entry_t = max(trig, b.o) * (1 + slippage), b.t
                     if b.l <= cur_stop:            # same-bar stop: assume the worst
-                        exit_px = cur_stop * (1 - slippage)
+                        exit_px, exit_t2 = cur_stop * (1 - slippage), b.t
                         break
                 continue
             if tt >= exit_t:
-                exit_px = b.o * (1 - slippage)
+                exit_px, exit_t2 = b.o * (1 - slippage), b.t
                 break
             if b.l <= cur_stop:
-                exit_px = min(cur_stop, b.o) * (1 - slippage)
+                exit_px, exit_t2 = min(cur_stop, b.o) * (1 - slippage), b.t
                 break
             if p["breakeven_at_r"] > 0 and b.h >= entry + p["breakeven_at_r"] * risk:
                 cur_stop = max(cur_stop, entry)
         if entry is not None:
             if exit_px is None:
-                exit_px = bars[sym][-1].c * (1 - slippage)
+                exit_px, exit_t2 = bars[sym][-1].c * (1 - slippage), bars[sym][-1].t
             trades.append({"day": str(day), "symbol": sym, "r": (exit_px - entry) / risk,
-                           "ret": exit_px / entry - 1, "slots": p["max_positions"]})
-    return trades
+                           "ret": exit_px / entry - 1, "slots": p["max_positions"],
+                           "entry_t": entry_t, "exit_t": exit_t2})
+    return apply_loss_limits(trades, p)
+
+
+def apply_loss_limits(trades, p):
+    """Drop entries that live Latara would have skipped because she had already
+    hit her loser count or daily loss limit earlier that day."""
+    kept = []
+    for t in sorted(trades, key=lambda x: x["entry_t"]):
+        done = [k for k in kept if k["exit_t"] <= t["entry_t"]]
+        losers = sum(1 for k in done if k["ret"] < 0)
+        day_ret = sum(k["ret"] for k in done) / p["max_positions"]
+        if losers >= p["max_losers"] or day_ret <= -p["daily_loss_limit"]:
+            continue
+        kept.append(t)
+    return kept
 
 
 def evaluate(days, data, p) -> dict:
@@ -277,6 +297,7 @@ def describe(p: dict) -> str:
     bits.append(f"stop to breakeven at +{p['breakeven_at_r']}R" if p["breakeven_at_r"] else "no breakeven move")
     bits.append("only when SPY opens green" if p["require_spy_green"] else "any market open")
     bits.append(f"gap-up of {p['min_gap']:.0%}+ required" if p["min_gap"] else "no gap requirement")
+    bits.append(f"stop for the day after {p['max_losers']} loser(s) or {p['daily_loss_limit']:.0%} down")
     return "; ".join(bits)
 
 
@@ -313,6 +334,11 @@ def study(cfg):
     if ev.get("best"):
         lines.append(f"| Best new idea | {_fmt(ev['best_train'])} | {_fmt(ev['best_test'])} |")
         lines += ["", f"Best new idea was: {describe(ev['best'])}"]
+    try:
+        from .money import todays_capital
+        lines += ["", f"**Capital:** {todays_capital(cfg, JOURNAL)[1]}"]
+    except Exception:
+        pass
     lines += ["", "### Reality check (her real paper trades so far)"]
     if real["trades"]:
         lines.append(f"{real['trades']} trades, win rate {real['win_rate']:.0%}, avg {real['avg_r']:+.2f}R, "
@@ -320,7 +346,7 @@ def study(cfg):
     else:
         lines.append("No real trades yet.")
     lines += ["", "_Replays are estimates: real fills at the open are usually worse. "
-                  "Money and safety settings are never changed by learning._"]
+                  "Paper vs live is never changed by learning._"]
     report = "\n".join(lines)
     print(report)
     os.makedirs("logs", exist_ok=True)

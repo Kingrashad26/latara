@@ -1,0 +1,25 @@
+name: Latara – weekly scorecard
+
+on:
+  schedule:
+    - cron: "30 22 * * 5"   # Friday evening
+  workflow_dispatch: {}
+
+jobs:
+  scorecard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python -m latara scorecard
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          LATARA_MODE: ${{ vars.LATARA_MODE }}
+          LATARA_CONFIRM_LIVE: ${{ vars.LATARA_CONFIRM_LIVE }}
+          LATARA_DAILY_GOAL: ${{ vars.LATARA_DAILY_GOAL }}

@@ -56,7 +56,9 @@ would need to get there.
 | Variable | Default | What it does |
 |---|---|---|
 | `LATARA_ENABLED` | true | Set to `false` to pause Latara (kill switch) |
-| `LATARA_MAX_CAPITAL` | 100 | The most she will deploy in a day |
+| `LATARA_MAX_CAPITAL` | (unset) | Fix her daily capital yourself (turns off compounding) |
+| `LATARA_STARTING_CAPITAL` | 100 | Where her compounding capital starts |
+| `LATARA_CAPITAL_CEILING` | 10000 | The most she may ever trade with in a day |
 | `LATARA_MAX_POSITIONS` | 2 | Trades per day |
 | `LATARA_DAILY_GOAL` | 100 | Scorecard target in dollars |
 | `LATARA_REQUIRE_SPY_GREEN` | false | Only trade when the overall market opens green |
@@ -81,8 +83,19 @@ the way professional systematic traders do:
    history of past decisions) and used from Monday on. You get the study
    report by email.
 
-Learning can never change money or safety settings (capital, loss limits,
-paper/live). Any repo Variable you set overrides what she learned.
+She also manages her own money settings:
+- **Loss limits** – she learns whether to stop for the day after 1 or 2 losing
+  trades, and at a 2% or 5% daily loss, using the same prove-it test.
+- **Capital** – her trading capital starts at $100 and compounds with her own
+  results: profits grow tomorrow's budget, losses shrink it. Paper and live
+  money are tracked separately, so live starts fresh at $100.
+- **Automatic limits** – never more than the account's settled cash, never more
+  than `LATARA_CAPITAL_CEILING` ($10,000), and a drawdown brake: if her capital
+  falls 20% below its best level she trades at half size until she recovers.
+
+**Paper vs live is yours alone** – learning can never switch it. Any repo
+Variable you set overrides what she learned (for example `LATARA_MAX_CAPITAL`
+fixes her capital and turns compounding off).
 
 ## Before considering live money
 Let Latara paper trade for at least 20 trading days. Check the Friday

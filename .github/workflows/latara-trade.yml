@@ -16,6 +16,8 @@ jobs:
   trade:
     runs-on: ubuntu-latest
     timeout-minutes: 355
+    env:
+      HAS_MAIL: ${{ secrets.GMAIL_APP_PASSWORD != '' && secrets.LATARA_EMAIL != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -24,6 +26,7 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - name: Run Latara
+        id: latara
         run: python -m latara trade
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
@@ -38,6 +41,20 @@ jobs:
           LATARA_BREAKEVEN_AT_R: ${{ vars.LATARA_BREAKEVEN_AT_R }}
           LATARA_DRY_RUN: ${{ vars.LATARA_DRY_RUN }}
           LATARA_INTRADAY_FEED: ${{ vars.LATARA_INTRADAY_FEED }}
+      - name: Email daily report to you
+        if: always() && env.HAS_MAIL == 'true' && hashFiles('logs/report.md') != ''
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.LATARA_EMAIL }}
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject: ${{ steps.latara.outputs.subject || 'Latara daily report' }}
+          to: ${{ secrets.LATARA_EMAIL }}
+          from: Latara <${{ secrets.LATARA_EMAIL }}>
+          body: file://logs/report.md
+          convert_markdown: true
       - uses: actions/upload-artifact@v4
         if: always()
         with:

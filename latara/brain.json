@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-11-26 18:06:12.836196-05:00",
+  "updated": "2026-11-26 18:17:59.727713-05:00",
   "params": {
     "atr_stop_frac": 0.1,
     "min_rel_volume": 1.0,
@@ -30,29 +30,31 @@
       "green_days": 3,
       "days": 16
     },
-    "candidates": 72,
-    "tested": 192,
+    "candidates": 272,
+    "tested": 768,
     "best": {
       "atr_stop_frac": 0.2,
       "min_rel_volume": 2.0,
       "max_positions": 2,
       "breakeven_at_r": 0.0,
       "require_spy_green": false,
-      "min_gap": 0.0
+      "min_gap": 0.0,
+      "max_losers": 1,
+      "daily_loss_limit": 0.02
     },
     "best_train": {
-      "trades": 32,
-      "win_rate": 0.15625,
-      "avg_r": -0.10073662538267562,
-      "return": -0.01918550428739696,
+      "trades": 26,
+      "win_rate": 0.19230769230769232,
+      "avg_r": 0.13961132363677714,
+      "return": 0.007893606621953486,
       "green_days": 3,
       "days": 37
     },
     "best_test": {
-      "trades": 15,
-      "win_rate": 0.2,
-      "avg_r": -0.28264667837119195,
-      "return": -0.01597933846010191,
+      "trades": 12,
+      "win_rate": 0.25,
+      "avg_r": -0.07202968168647127,
+      "return": -0.0017240855548772416,
       "green_days": 2,
       "days": 16
     },
@@ -69,6 +71,20 @@
         "breakeven_at_r": 0.0,
         "require_spy_green": false,
         "min_gap": 0.0
+      }
+    },
+    {
+      "date": "2026-11-26",
+      "decision": "kept current rules (new idea didn't hold up on unseen weeks)",
+      "params": {
+        "atr_stop_frac": 0.1,
+        "min_rel_volume": 1.0,
+        "max_positions": 2,
+        "breakeven_at_r": 0.0,
+        "require_spy_green": false,
+        "min_gap": 0.0,
+        "max_losers": 2,
+        "daily_loss_limit": 0.05
       }
     }
   ]

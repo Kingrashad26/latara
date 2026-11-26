@@ -114,6 +114,8 @@ def passes_filters(c: Candidate, cfg) -> tuple[bool, str]:
         return False, f"relative volume {c.rel_volume:.2f}x too low"
     if c.or_close <= c.or_open:
         return False, "first 5-min candle not green (long-only)"
+    if getattr(cfg, "min_gap", 0.0) > 0 and c.gap_pct < cfg.min_gap:
+        return False, f"gap {c.gap_pct:+.1%} below {cfg.min_gap:.0%} (gap-and-go rule)"
     return True, "ok"
 
 

@@ -65,4 +65,7 @@ def test_full_day(monkeypatch, tmp_path):
     assert by["LOSE"].note == "stop" and by["LOSE"].pnl < 0
     assert clk.t <= datetime(2026, 12, 1, 15, 46, tzinfo=ET)
     assert list(tmp_path.glob("trades-*.csv"))
+    report = (tmp_path / "report.md").read_text()
+    assert report.startswith("# ") and ("MADE money" in report or "LOST money" in report or "Broke even" in report)
+    assert bot.headline(12.5).startswith("MADE money, +$12.50") and bot.headline(-3).startswith("LOST money, -$3.00")
     assert (tmp_path / "journal.csv").read_text().count("\n") == 3   # header + 2 trades

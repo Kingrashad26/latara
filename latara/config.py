@@ -46,7 +46,10 @@ class Config:
     daily_feed: str            # "sip" works on free plan for bars older than 15 min
 
     # --- money / risk ---
-    max_capital: float         # most Latara will ever deploy in one day
+    max_capital: float         # fixed daily capital (only used if you set LATARA_MAX_CAPITAL)
+    fixed_capital: bool        # True when you set LATARA_MAX_CAPITAL (turns off compounding)
+    starting_capital: float    # where Latara's compounding capital starts
+    capital_ceiling: float     # the most she may ever trade with in a day
     max_positions: int         # trades per day (one per stock)
     risk_per_trade: float      # fraction of the day's budget risked per trade
     daily_loss_limit: float    # stop for the day if equity falls this fraction
@@ -89,10 +92,13 @@ def load() -> Config:
         intraday_feed=_s("LATARA_INTRADAY_FEED", "iex"),
         daily_feed=_s("LATARA_DAILY_FEED", "sip"),
         max_capital=_f("LATARA_MAX_CAPITAL", 100.0),
+        fixed_capital=_s("LATARA_MAX_CAPITAL", "") != "",
+        starting_capital=_f("LATARA_STARTING_CAPITAL", 100.0),
+        capital_ceiling=_f("LATARA_CAPITAL_CEILING", 10_000.0),
         max_positions=_i("LATARA_MAX_POSITIONS", b.get("max_positions", 2)),
         risk_per_trade=_f("LATARA_RISK_PER_TRADE", 0.02),
-        daily_loss_limit=_f("LATARA_DAILY_LOSS_LIMIT", 0.05),
-        max_losers=_i("LATARA_MAX_LOSERS", 2),
+        daily_loss_limit=_f("LATARA_DAILY_LOSS_LIMIT", b.get("daily_loss_limit", 0.05)),
+        max_losers=_i("LATARA_MAX_LOSERS", b.get("max_losers", 2)),
         max_entry_slippage=_f("LATARA_MAX_ENTRY_SLIPPAGE", 0.005),
         atr_stop_frac=_f("LATARA_ATR_STOP_FRAC", b.get("atr_stop_frac", 0.10)),
         min_price=_f("LATARA_MIN_PRICE", 5.0),

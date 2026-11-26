@@ -292,6 +292,12 @@ class Latara:
             with open(summary, "a") as f:
                 f.write(report + "\n")
         LOG_DIR.mkdir(exist_ok=True)
+        (LOG_DIR / "report.md").write_text(report + "\n")
+        out = os.getenv("GITHUB_OUTPUT")
+        if out:
+            status = "goal met" if day_pnl >= goal else ("green day" if day_pnl > 0 else "no gain")
+            with open(out, "a") as f:
+                f.write(f"subject=Latara {now_et().date()}: {day_pnl:+,.2f} ({status})\n")
         path = LOG_DIR / f"trades-{now_et().date()}.csv"
         with open(path, "w", newline="") as f:
             w = csv.writer(f)

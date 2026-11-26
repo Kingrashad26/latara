@@ -28,6 +28,9 @@ jobs:
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
           LATARA_MODE: ${{ vars.LATARA_MODE }}
           LATARA_CONFIRM_LIVE: ${{ vars.LATARA_CONFIRM_LIVE }}
+          LATARA_STARTING_CAPITAL: ${{ vars.LATARA_STARTING_CAPITAL }}
+          LATARA_CAPITAL_CEILING: ${{ vars.LATARA_CAPITAL_CEILING }}
+          LATARA_MAX_CAPITAL: ${{ vars.LATARA_MAX_CAPITAL }}
       - name: Save what Latara learned
         run: |
           git config user.name "Latara"

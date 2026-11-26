@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "updated": "2026-11-26 (starting rules from the research paper)",
+  "params": {
+    "atr_stop_frac": 0.1,
+    "min_rel_volume": 1.0,
+    "max_positions": 2,
+    "breakeven_at_r": 0.0,
+    "require_spy_green": false,
+    "min_gap": 0.0
+  },
+  "history": []
+}

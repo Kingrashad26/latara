@@ -45,6 +45,7 @@ def test_filters():
     assert not passes_filters(good(rel_volume=0.5), c)[0]
     assert not passes_filters(good(prev_close=3), c)[0]
     assert not passes_filters(good(atr=0.2), c)[0]
+    assert passes_filters(good(prev_close=21), c)[0]           # gap-down allowed when gap rule off
 
 
 def test_rank():

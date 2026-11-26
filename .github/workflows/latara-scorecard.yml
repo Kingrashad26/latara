@@ -9,6 +9,8 @@ jobs:
   scorecard:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      HAS_MAIL: ${{ secrets.GMAIL_APP_PASSWORD != '' && secrets.LATARA_EMAIL != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -23,3 +25,17 @@ jobs:
           LATARA_MODE: ${{ vars.LATARA_MODE }}
           LATARA_CONFIRM_LIVE: ${{ vars.LATARA_CONFIRM_LIVE }}
           LATARA_DAILY_GOAL: ${{ vars.LATARA_DAILY_GOAL }}
+      - name: Email weekly scorecard to you
+        if: always() && env.HAS_MAIL == 'true' && hashFiles('logs/scorecard.md') != ''
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.LATARA_EMAIL }}
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject: Latara weekly scorecard
+          to: ${{ secrets.LATARA_EMAIL }}
+          from: Latara <${{ secrets.LATARA_EMAIL }}>
+          body: file://logs/scorecard.md
+          convert_markdown: true

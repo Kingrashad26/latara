@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-11-26 (starting rules from the research paper)",
+  "updated": "2026-11-26 18:06:12.836196-05:00",
   "params": {
     "atr_stop_frac": 0.1,
     "min_rel_volume": 1.0,
@@ -9,5 +9,65 @@
     "require_spy_green": false,
     "min_gap": 0.0
   },
-  "history": []
+  "evidence": {
+    "train_days": 37,
+    "test_days": 16,
+    "current_train": {
+      "trades": 58,
+      "win_rate": 0.06896551724137931,
+      "avg_r": -0.899754416064267,
+      "return": -0.09647747016594077,
+      "green_days": 3,
+      "days": 37
+    },
+    "current_test": {
+      "trades": 24,
+      "win_rate": 0.125,
+      "avg_r": -0.05679144760081087,
+      "return": 0.011139812593867537,
+      "green_days": 3,
+      "days": 16
+    },
+    "candidates": 72,
+    "tested": 192,
+    "best": {
+      "atr_stop_frac": 0.2,
+      "min_rel_volume": 2.0,
+      "max_positions": 2,
+      "breakeven_at_r": 0.0,
+      "require_spy_green": false,
+      "min_gap": 0.0
+    },
+    "best_train": {
+      "trades": 32,
+      "win_rate": 0.15625,
+      "avg_r": -0.10073662538267562,
+      "return": -0.01918550428739696,
+      "green_days": 3,
+      "days": 37
+    },
+    "best_test": {
+      "trades": 15,
+      "win_rate": 0.2,
+      "avg_r": -0.28264667837119195,
+      "return": -0.01597933846010191,
+      "green_days": 2,
+      "days": 16
+    },
+    "decision": "kept current rules (new idea didn't hold up on unseen weeks)"
+  },
+  "history": [
+    {
+      "date": "2026-11-26",
+      "decision": "kept current rules (new idea didn't hold up on unseen weeks)",
+      "params": {
+        "atr_stop_frac": 0.1,
+        "min_rel_volume": 1.0,
+        "max_positions": 2,
+        "breakeven_at_r": 0.0,
+        "require_spy_green": false,
+        "min_gap": 0.0
+      }
+    }
+  ]
 }

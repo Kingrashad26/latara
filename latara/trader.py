@@ -291,6 +291,18 @@ class Latara:
                             p.exit_price, p.filled_qty, round(p.pnl, 2), round(p.r_multiple, 2),
                             round(p.rel_volume, 2)])
 
+    def headline(self, day_pnl: float) -> str:
+        """Plain-English result for the email subject and first line."""
+        traded = any(p.state == "closed" for p in self.plans)
+        goal = f" (goal ${self.cfg.daily_goal:,.0f} MET!)" if day_pnl >= self.cfg.daily_goal else ""
+        if not traded:
+            return "No trades today, $0.00 (no setups met her rules)"
+        if day_pnl >= 0.005:
+            return f"MADE money, +${day_pnl:,.2f} today{goal}"
+        if day_pnl <= -0.005:
+            return f"LOST money, -${abs(day_pnl):,.2f} today"
+        return "Broke even, $0.00 today"
+
     def finish(self, start_equity: float):
         realized = sum(p.pnl for p in self.plans)
         try:
@@ -300,6 +312,8 @@ class Latara:
         day_pnl = end_equity - start_equity
         goal = self.cfg.daily_goal
         lines = [
+            f"# {self.headline(day_pnl)}",
+            "",
             "## Latara – daily report",
             f"- Mode: {'LIVE' if self.cfg.live else 'paper'}",
             f"- Latara's capital: {self.capital_note or 'n/a'}",
@@ -320,9 +334,8 @@ class Latara:
         (LOG_DIR / "report.md").write_text(report + "\n")
         out = os.getenv("GITHUB_OUTPUT")
         if out:
-            status = "goal met" if day_pnl >= goal else ("green day" if day_pnl > 0 else "no gain")
             with open(out, "a") as f:
-                f.write(f"subject=Latara {now_et().date()}: {day_pnl:+,.2f} ({status})\n")
+                f.write(f"subject=Latara {now_et().strftime('%a %b %-d')}: {self.headline(day_pnl)}\n")
         self.write_journal()
         path = LOG_DIR / f"trades-{now_et().date()}.csv"
         with open(path, "w", newline="") as f:
